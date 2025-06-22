@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Real-Time Earning Test</title>
+  </head>
+  <body>
+    <h2>Listening for Earnings...</h2>
+    <ul id="events"></ul>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const userId = 7;
+      const socket = io("http://localhost:5000");
+
+      socket.emit("register", userId);
+
+      socket.on("new_earning", (data) => {
+        displayEarning(data);
+      });
+
+      fetch(`http://localhost:5000/api/earning/${userId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          data.earnings.level_1
+            .concat(data.earnings.level_2)
+            .forEach((earning) => {
+              displayEarning({
+                from_user: earning.from_user,
+                amount: earning.amount_earned,
+                level: earning.level,
+              });
+            });
+        })
+        .catch((err) => console.error("Failed to fetch earnings:", err));
+
+      function displayEarning(data) {
+        const li = document.createElement("li");
+        li.textContent = `₹${data.amount} from level ${data.level} ( ${data.from_user})`;
+        document.getElementById("events").appendChild(li);
+      }
+    </script>
+  </body>
+</html>

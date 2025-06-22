@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Chart Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      canvas {
+        max-width: 250px;
+        max-height: 250px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Doughnut Chart</h3>
+    <canvas id="doughnutChart"></canvas>
+
+    <h3>Bar Chart</h3>
+    <canvas id="barChart"></canvas>
+
+    <script>
+      fetch("http://localhost:5000/api/visualisation/7/chart")
+        .then((res) => res.json())
+        .then((data) => {
+          new Chart(document.getElementById("doughnutChart"), {
+            type: "doughnut",
+            data: {
+              labels: ["Level 1", "Level 2"],
+              datasets: [
+                {
+                  data: [
+                    data.level_distribution.level_1,
+                    data.level_distribution.level_2,
+                  ],
+                  backgroundColor: ["#4CAF50", "#2196F3"],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+            },
+          });
+
+          const combined = {};
+
+          data.sources.forEach((item) => {
+            if (!combined[item.user_name]) {
+              combined[item.user_name] = {
+                amount_earned: parseFloat(item.amount_earned),
+                level: item.level,
+              };
+            } else {
+              combined[item.user_name].amount_earned += parseFloat(
+                item.amount_earned
+              );
+            }
+          });
+
+          const labels = Object.keys(combined);
+          const earnings = labels.map((name) => combined[name].amount_earned);
+          const backgroundColors = labels.map((name) =>
+            combined[name].level === 1 ? "#4CAF50" : "#2196F3"
+          );
+
+          new Chart(document.getElementById("barChart"), {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Earnings (₹)",
+                  data: earnings,
+                  backgroundColor: backgroundColors,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 2000,
+                easing: "easeOutBounce",
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                },
+              },
+            },
+          });
+        })
+        .catch((err) => {
+          console.error("Error loading chart data:", err);
+          alert("Could not load chart data.");
+        });
+    </script>
+  </body>
+</html>
